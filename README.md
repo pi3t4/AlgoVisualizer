@@ -6,6 +6,8 @@ This project showcases the functionality of popular sorting algorithms, includin
 - Quick Sort  
 - Insertion Sort  
 - Selection Sort  
+- Quick sort
+_ Heap sort
 
 ![Demo](demo.gif) *Include a demo GIF/screenshot here!*
 
@@ -43,6 +45,7 @@ This project showcases the functionality of popular sorting algorithms, includin
    - **Time Complexity**:  
      - Best Case: `O(n²)`  
      - Worst Case: `O(n²)`  
+### 5 **Quick sort**
 
 ---
 
@@ -52,3 +55,4 @@ This project showcases the functionality of popular sorting algorithms, includin
    ```bash  
    git clone https://github.com/YourUsername/AlgoVisualAlyzer.git  
    cd AlgoVisualAlyzer  
+   python3 Algovisual.py
