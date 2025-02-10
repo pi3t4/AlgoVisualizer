@@ -45,7 +45,9 @@ _ Heap sort
    - **Time Complexity**:  
      - Best Case: `O(n²)`  
      - Worst Case: `O(n²)`  
-### 5 **Quick sort**
+### 5 ** Heap sort**
+   - 
+
 
 ---
 
@@ -53,6 +55,7 @@ _ Heap sort
 
 1. **Clone the repository**:  
    ```bash  
-   git clone https://github.com/YourUsername/AlgoVisualAlyzer.git  
+   git clone https://github.com/pi3t4/AlgoVisualAlyzer.git  
    cd AlgoVisualAlyzer  
+   python3 -r requirement.txt
    python3 Algovisual.py

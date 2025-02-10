@@ -1,220 +1,149 @@
 
-import tkinter as tk
-from tkinter import ttk
+import pygame
 import random
+import math
 
-# Constants
-WIDTH = 1000
-HEIGHT = 600
-MIN_VAL = 0
-MAX_VAL = 100
-NUM_BARS = 50
-GRADIENT = ["#FF6B6B", "#FFE66D", "#4ECDC4", "#556270"]  # Gradient colors for bars
+pygame.init()
 
-# Sorting Algorithms
-def bubble_sort(data, draw, ascending=True):
-    n = len(data)
-    for i in range(n - 1):
-        for j in range(n - 1 - i):
-            if (data[j] > data[j + 1] and ascending) or (data[j] < data[j + 1] and not ascending):
-                data[j], data[j + 1] = data[j + 1], data[j]
-                draw(data, {j: "#4ECDC4", j + 1: "#FF6B6B"})
+class DrawInformation:
+    BLACK = 0, 0, 0
+    WHITE = 255, 255, 255
+    GREEN = 0, 255, 0
+    RED = 255, 0, 0
+    BACKGROUND_COLOR = WHITE
+    GRADIENTS = [(128, 128, 128), (160, 160, 160), (192, 192, 192)]
+    FONT = pygame.font.SysFont('comicsans', 30)
+    LARGE_FONT = pygame.font.SysFont('comicsans', 40)
+    SIDE_PAD = 100
+    TOP_PAD = 150
+
+    def __init__(self, width, height, lst):
+        self.width = width
+        self.height = height
+        self.window = pygame.display.set_mode((width, height))
+        pygame.display.set_caption("Sorting Algorithm Visualization")
+        self.set_list(lst)
+
+    def set_list(self, lst):
+        self.lst = lst
+        self.min_val = min(lst)
+        self.max_val = max(lst)
+        self.block_width = round((self.width - self.SIDE_PAD) / len(lst))
+        self.block_height = math.floor((self.height - self.TOP_PAD) / (self.max_val - self.min_val))
+        self.start_x = self.SIDE_PAD // 2
+
+def draw(draw_info, algo_name, ascending):
+    draw_info.window.fill(draw_info.BACKGROUND_COLOR)
+    title = draw_info.LARGE_FONT.render(f"{algo_name} - {'Ascending' if ascending else 'Descending'}", 1, draw_info.GREEN)
+    draw_info.window.blit(title, (draw_info.width / 2 - title.get_width() / 2, 5))
+    controls = draw_info.FONT.render("R - Reset | SPACE - Start Sorting | A - Ascending | D - Descending", 1, draw_info.BLACK)
+    draw_info.window.blit(controls, (draw_info.width / 2 - controls.get_width() / 2, 45))
+    sorting = draw_info.FONT.render("I - Insertion | B - Bubble | S - Selection | M - Merge | Q - Quick", 1, draw_info.BLACK)
+    draw_info.window.blit(sorting, (draw_info.width / 2 - sorting.get_width() / 2, 75))
+    draw_list(draw_info)
+    pygame.display.update()
+
+def draw_list(draw_info, color_positions={}, clear_bg=False):
+    lst = draw_info.lst
+    if clear_bg:
+        clear_rect = (draw_info.SIDE_PAD // 2, draw_info.TOP_PAD, draw_info.width - draw_info.SIDE_PAD, draw_info.height - draw_info.TOP_PAD)
+        pygame.draw.rect(draw_info.window, draw_info.BACKGROUND_COLOR, clear_rect)
+    for i, val in enumerate(lst):
+        x = draw_info.start_x + i * draw_info.block_width
+        y = draw_info.height - (val - draw_info.min_val) * draw_info.block_height
+        color = draw_info.GRADIENTS[i % 3]
+        if i in color_positions:
+            color = color_positions[i]
+        pygame.draw.rect(draw_info.window, color, (x, y, draw_info.block_width, draw_info.height))
+    if clear_bg:
+        pygame.display.update()
+
+def generate_starting_list(n, min_val, max_val):
+    return [random.randint(min_val, max_val) for _ in range(n)]
+
+def bubble_sort(draw_info, ascending=True):
+    lst = draw_info.lst
+    for i in range(len(lst) - 1):
+        for j in range(len(lst) - 1 - i):
+            if (lst[j] > lst[j + 1] and ascending) or (lst[j] < lst[j + 1] and not ascending):
+                lst[j], lst[j + 1] = lst[j + 1], lst[j]
+                draw_list(draw_info, {j: draw_info.GREEN, j + 1: draw_info.RED}, True)
                 yield True
 
-def insertion_sort(data, draw, ascending=True):
-    for i in range(1, len(data)):
-        current = data[i]
-        while True:
-            ascending_sort = i > 0 and data[i - 1] > current and ascending
-            descending_sort = i > 0 and data[i - 1] < current and not ascending
-            if not ascending_sort and not descending_sort:
-                break
-            data[i] = data[i - 1]
-            i -= 1
-            data[i] = current
-            draw(data, {i: "#4ECDC4", i - 1: "#FF6B6B"})
+def insertion_sort(draw_info, ascending=True):
+    lst = draw_info.lst
+    for i in range(1, len(lst)):
+        current = lst[i]
+        j = i - 1
+        while j >= 0 and ((lst[j] > current and ascending) or (lst[j] < current and not ascending)):
+            lst[j + 1] = lst[j]
+            j -= 1
+            draw_list(draw_info, {j + 1: draw_info.GREEN, i: draw_info.RED}, True)
             yield True
+        lst[j + 1] = current
 
-def selection_sort(data, draw, ascending=True):
-    for i in range(len(data)):
-        min_idx = i
-        for j in range(i + 1, len(data)):
-            if (data[j] < data[min_idx] and ascending) or (data[j] > data[min_idx] and not ascending):
-                min_idx = j
-        data[i], data[min_idx] = data[min_idx], data[i]
-        draw(data, {i: "#4ECDC4", min_idx: "#FF6B6B"})
+def selection_sort(draw_info, ascending=True):
+    lst = draw_info.lst
+    for i in range(len(lst)):
+        min_max_idx = i
+        for j in range(i + 1, len(lst)):
+            if (lst[j] < lst[min_max_idx] and ascending) or (lst[j] > lst[min_max_idx] and not ascending):
+                min_max_idx = j
+        lst[i], lst[min_max_idx] = lst[min_max_idx], lst[i]
+        draw_list(draw_info, {i: draw_info.GREEN, min_max_idx: draw_info.RED}, True)
         yield True
 
-def merge_sort(data, draw, ascending=True):
-    def merge(arr, l, m, r):
-        left = arr[l:m + 1]
-        right = arr[m + 1:r + 1]
-        i = j = 0
-        k = l
-        while i < len(left) and j < len(right):
-            if (left[i] <= right[j] and ascending) or (left[i] >= right[j] and not ascending):
-                arr[k] = left[i]
-                i += 1
-            else:
-                arr[k] = right[j]
-                j += 1
-            k += 1
-        while i < len(left):
-            arr[k] = left[i]
-            i += 1
-            k += 1
-        while j < len(right):
-            arr[k] = right[j]
-            j += 1
-            k += 1
-        draw(arr, {x: "#4ECDC4" for x in range(l, r + 1)})
-        yield True
+def main():
+    run = True
+    clock = pygame.time.Clock()
+    n = 50
+    min_val = 0
+    max_val = 100
+    lst = generate_starting_list(n, min_val, max_val)
+    draw_info = DrawInformation(800, 600, lst)
+    sorting = False
+    ascending = True
+    sorting_algorithm = bubble_sort
+    sorting_algo_name = "Bubble Sort"
+    sorting_algorithm_generator = None
+    
+    while run:
+        clock.tick(60)
+        if sorting:
+            try:
+                next(sorting_algorithm_generator)
+            except StopIteration:
+                sorting = False
+        else:
+            draw(draw_info, sorting_algo_name, ascending)
+        
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+            if event.type != pygame.KEYDOWN:
+                continue
+            if event.key == pygame.K_r:
+                lst = generate_starting_list(n, min_val, max_val)
+                draw_info.set_list(lst)
+                sorting = False
+            elif event.key == pygame.K_SPACE and not sorting:
+                sorting = True
+                sorting_algorithm_generator = sorting_algorithm(draw_info, ascending)
+            elif event.key == pygame.K_a and not sorting:
+                ascending = True
+            elif event.key == pygame.K_d and not sorting:
+                ascending = False
+            elif event.key == pygame.K_i and not sorting:
+                sorting_algorithm = insertion_sort
+                sorting_algo_name = "Insertion Sort"
+            elif event.key == pygame.K_b and not sorting:
+                sorting_algorithm = bubble_sort
+                sorting_algo_name = "Bubble Sort"
+            elif event.key == pygame.K_s and not sorting:
+                sorting_algorithm = selection_sort
+                sorting_algo_name = "Selection Sort"
+    
+    pygame.quit()
 
-    def sort(arr, l, r):
-        if l < r:
-            m = (l + r) // 2
-            yield from sort(arr, l, m)
-            yield from sort(arr, m + 1, r)
-            yield from merge(arr, l, m, r)
-
-    yield from sort(data, 0, len(data) - 1)
-
-def quick_sort(data, draw, ascending=True):
-    def partition(arr, low, high):
-        pivot = arr[high]
-        i = low - 1
-        for j in range(low, high):
-            if (arr[j] <= pivot and ascending) or (arr[j] >= pivot and not ascending):
-                i += 1
-                arr[i], arr[j] = arr[j], arr[i]
-                draw(arr, {i: "#4ECDC4", j: "#FF6B6B"})
-                yield True
-        arr[i + 1], arr[high] = arr[high], arr[i + 1]
-        return i + 1
-
-    def sort(arr, low, high):
-        if low < high:
-            pi = yield from partition(arr, low, high)
-            yield from sort(arr, low, pi - 1)
-            yield from sort(arr, pi + 1, high)
-
-    yield from sort(data, 0, len(data) - 1)
-
-def heap_sort(data, draw, ascending=True):
-    def heapify(arr, n, i):
-        largest = i
-        left = 2 * i + 1
-        right = 2 * i + 2
-        if left < n and ((arr[left] > arr[largest] and ascending) or (arr[left] < arr[largest] and not ascending)):
-            largest = left
-        if right < n and ((arr[right] > arr[largest] and ascending) or (arr[right] < arr[largest] and not ascending)):
-            largest = right
-        if largest != i:
-            arr[i], arr[largest] = arr[largest], arr[i]
-            draw(arr, {i: "#4ECDC4", largest: "#FF6B6B"})
-            yield True
-            yield from heapify(arr, n, largest)
-
-    n = len(data)
-    for i in range(n // 2 - 1, -1, -1):
-        yield from heapify(data, n, i)
-    for i in range(n - 1, 0, -1):
-        data[i], data[0] = data[0], data[i]
-        yield from heapify(data, i, 0)
-
-# Main Application
-class SortingVisualizer:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Sorting Algorithm Visualizer")
-        self.root.geometry(f"{WIDTH}x{HEIGHT}")
-        self.root.configure(bg="#F5F5F5")
-        self.data = []
-        self.generate_data()
-        self.setup_ui()
-        self.draw_data()
-
-    def generate_data(self):
-        self.data = [random.randint(MIN_VAL, MAX_VAL) for _ in range(NUM_BARS)]
-
-    def draw_data(self, color_positions={}):
-        self.canvas.delete("all")
-        bar_width = (WIDTH - 40) / len(self.data)
-        for i, val in enumerate(self.data):
-            x0 = 20 + i * bar_width
-            y0 = HEIGHT - 80 - (val / MAX_VAL) * (HEIGHT - 120)
-            x1 = 20 + (i + 1) * bar_width
-            y1 = HEIGHT - 80
-            color = GRADIENT[i % len(GRADIENT)]
-            if i in color_positions:
-                color = color_positions[i]
-            self.canvas.create_rectangle(x0, y0, x1, y1, fill=color, outline=color)
-
-    def setup_ui(self):
-        # Title
-        title = tk.Label(self.root, text="Sorting Algorithm Visualizer", font=("Helvetica", 20, "bold"), bg="#F5F5F5", fg="#333333")
-        title.pack(pady=10)
-
-        # Canvas
-        self.canvas = tk.Canvas(self.root, width=WIDTH - 40, height=HEIGHT - 160, bg="#FFFFFF", bd=0, highlightthickness=0)
-        self.canvas.pack(pady=10)
-
-        # Controls Frame
-        controls = tk.Frame(self.root, bg="#F5F5F5")
-        controls.pack(pady=10)
-
-        # Algorithm Selection
-        self.algo_var = tk.StringVar(value="Bubble Sort")
-        algorithms = ["Bubble Sort", "Insertion Sort", "Selection Sort", "Merge Sort", "Quick Sort", "Heap Sort"]
-        for algo in algorithms:
-            tk.Radiobutton(controls, text=algo, variable=self.algo_var, value=algo, font=("Helvetica", 12), bg="#F5F5F5", fg="#333333").pack(side=tk.LEFT, padx=10)
-
-        # Order Selection
-        self.ascending_var = tk.BooleanVar(value=True)
-        tk.Radiobutton(controls, text="Ascending", variable=self.ascending_var, value=True, font=("Helvetica", 12), bg="#F5F5F5", fg="#333333").pack(side=tk.LEFT, padx=10)
-        tk.Radiobutton(controls, text="Descending", variable=self.ascending_var, value=False, font=("Helvetica", 12), bg="#F5F5F5", fg="#333333").pack(side=tk.LEFT, padx=10)
-
-        # Buttons
-        tk.Button(controls, text="Reset", command=self.reset, font=("Helvetica", 12), bg="#4ECDC4", fg="white", bd=0, padx=10, pady=5).pack(side=tk.LEFT, padx=10)
-        tk.Button(controls, text="Start", command=self.start_sorting, font=("Helvetica", 12), bg="#FF6B6B", fg="white", bd=0, padx=10, pady=5).pack(side=tk.LEFT, padx=10)
-
-        # Status Bar
-        self.status = tk.Label(self.root, text="Ready", font=("Helvetica", 12), bg="#F5F5F5", fg="#333333")
-        self.status.pack(pady=10)
-
-    def reset(self):
-        self.generate_data()
-        self.draw_data()
-        self.status.config(text="Ready")
-
-    def start_sorting(self):
-        self.status.config(text=f"Sorting - {self.algo_var.get()} ({'Ascending' if self.ascending_var.get() else 'Descending'})")
-        algo = self.algo_var.get()
-        ascending = self.ascending_var.get()
-        if algo == "Bubble Sort":
-            generator = bubble_sort(self.data, self.draw_data, ascending)
-        elif algo == "Insertion Sort":
-            generator = insertion_sort(self.data, self.draw_data, ascending)
-        elif algo == "Selection Sort":
-            generator = selection_sort(self.data, self.draw_data, ascending)
-        elif algo == "Merge Sort":
-            generator = merge_sort(self.data, self.draw_data, ascending)
-        elif algo == "Quick Sort":
-            generator = quick_sort(self.data, self.draw_data, ascending)
-        elif algo == "Heap Sort":
-            generator = heap_sort(self.data, self.draw_data, ascending)
-
-        self.animate(generator)
-
-    def animate(self, generator):
-        try:
-            next(generator)
-            self.root.after(50, lambda: self.animate(generator))
-        except StopIteration:
-            self.status.config(text="Sorting Complete")
-
-# Run the Application
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = SortingVisualizer(root)
-    root.mainloop()
+    main()
