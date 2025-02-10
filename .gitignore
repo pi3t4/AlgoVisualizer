@@ -60,9 +60,6 @@ instance/
 # Sphinx documentation
 docs/_build/
 
-# PyBuilder
-target/
-
 # Jupyter Notebook
 .ipynb_checkpoints
 
@@ -100,6 +97,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+myenv/  # Explicitly ignore your custom virtual environment directory
 
 # VSCode settings
 .vscode/*
